@@ -568,6 +568,11 @@ func (s *IPCServer) handleConnect(w http.ResponseWriter, r *http.Request) {
 
 	renew := r.URL.Query().Get("renew") == "true"
 	if !renew && shouldRestoreEphemeral(cfg) {
+		// The cached string may use another relay; never hand it out for an explicit workbench request.
+		if input.Relay != nil {
+			http.Error(w, "an unexpired connection string already exists and may use a different relay; append --renew to the command you just copied to replace it", http.StatusConflict)
+			return
+		}
 		res, rerr := s.reuseUnexpiredEnrollment(cfg)
 		if rerr != nil {
 			http.Error(w, rerr.Error(), http.StatusInternalServerError)

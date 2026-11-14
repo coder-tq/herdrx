@@ -96,13 +96,27 @@ func TestConnectWithFailedWorkbenchKeepsEnrollment(t *testing.T) {
 	ephem := server.ephemServer
 	server.mu.Unlock()
 	before, _ := store.Snapshot()
+	var reused ConnectResult
+	if err := ClientCallIPC(sock, "POST", "/connect", connectRequest{Relay: bootstrap}, &reused); err == nil || reused.ConnectionString != "" || !strings.Contains(err.Error(), "--renew") {
+		t.Fatalf("explicit workbench reused a cached connection string: %v", err)
+	}
+	server.mu.Lock()
+	kept := server.ephemServer == ephem && server.activeConnStr == res.ConnectionString
+	server.mu.Unlock()
+	if after, _ := store.Snapshot(); !kept || after.Enrollment.EnrollmentID != before.Enrollment.EnrollmentID || after.Binding.Epoch != before.Binding.Epoch {
+		t.Fatal("rejected reuse changed the existing enrollment")
+	}
+	var again ConnectResult
+	if err := ClientCallIPC(sock, "POST", "/connect", nil, &again); err != nil || again.ConnectionString != res.ConnectionString {
+		t.Fatalf("plain connect no longer reuses the unexpired enrollment: %v", err)
+	}
 	var renewed ConnectResult
 	if err := ClientCallIPC(sock, "POST", "/connect?renew=true", connectRequest{Relay: bootstrap}, &renewed); err == nil || renewed.ConnectionString != "" {
 		t.Fatal("failed workbench renewed the enrollment")
 	}
 	after, _ := store.Snapshot()
 	server.mu.Lock()
-	kept := server.ephemServer == ephem && server.activeConnStr == res.ConnectionString
+	kept = server.ephemServer == ephem && server.activeConnStr == res.ConnectionString
 	server.mu.Unlock()
 	if !kept || after.Enrollment.EnrollmentID != before.Enrollment.EnrollmentID || after.Binding.Epoch != before.Binding.Epoch {
 		t.Fatal("failed workbench replaced the existing enrollment")
