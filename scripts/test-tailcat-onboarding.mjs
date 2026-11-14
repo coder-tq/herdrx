@@ -90,7 +90,8 @@ try {
         await fit(page)
         if (engine === 'chromium' && [1440, 390].includes(width)) await capture(page, `service-${width}-light`)
         await page.getByRole('button', { name: '服务已就绪，下一步' }).click()
-        await expect(page.getByLabel('生成绑定凭据', { exact: true })).toHaveText('~/.local/bin/herdrx connect --plain')
+        await expect(page.getByText(/自有中继版/)).toBeVisible()
+        await expect(page.getByLabel('生成绑定凭据', { exact: true })).toHaveCount(0)
         const credential = 'herdrx://v1/fixture-once-only'
         await page.getByRole('textbox', { name: /绑定凭据/ }).fill(credential)
         await page.getByRole('textbox', { name: '主机名称（可选）', exact: true }).fill('家里的主机')

@@ -93,7 +93,7 @@ sudo chmod 700 ./data
 
 ## 工作台自带中继
 
-`HERDRX_DERP_RELAY=auto` 为默认值。HTTP 部署不启动此中继；使用部署者自己的公网 HTTPS 反向代理时，中继与网站共用 HTTP 监听地址，代理需支持 `/derp` 的连接升级和长连接（Caddy 的 `reverse_proxy` 可直接转发）。网站自检与远程 CLI 的实际 TLS/DERP 握手均通过后，网页生成的连接命令才选择工作台中继；失败则在生成接入凭据前使用公共中继。连接命令携带工作台已验证的公网 IP，以兼容返回虚拟地址的本地 DNS 代理；始终按原域名校验证书。私网地址和无效证书不会被当作公网可用。
+`HERDRX_DERP_RELAY=auto` 为默认值。HTTP 部署不启动此中继；使用部署者自己的公网 HTTPS 反向代理时，中继与网站共用 HTTP 监听地址，代理需支持 `/derp` 的连接升级和长连接（Caddy 的 `reverse_proxy` 可直接转发）。网站自检与远程 CLI 的实际 TLS/DERP 握手均通过后，网页生成的连接命令才选择工作台中继；自有中继版网站自检失败时不提供连接命令；远程 CLI 握手失败时接入或端点更新直接报错，不改用公共中继，不生成凭据或更新包，已有绑定与端点保持不变。未固定中继的新主机执行无参数 `herdrx connect` 同样报错。连接命令携带工作台已验证的公网 IP，以兼容返回虚拟地址的本地 DNS 代理；始终按原域名校验证书。私网地址和无效证书不会被当作公网可用。
 
 中继只接纳临时授权登记的节点和有效用户已有主机的节点，转发加密隧道数据；不会开放匿名通用中继。临时命令 20 分钟有效，勿分享。每实例最多 128 个中继连接、每客户端 8 MiB/s 上限。已有主机的登记信息从持久化凭据恢复，网站重启后无需重新绑定。
 
@@ -111,7 +111,7 @@ STUN 默认关闭，不影响 DERP 转发。希望帮助探测 UDP 直连时，�
 
 ## 受控端与访问边界
 
-按网站三步引导完成 CLI 安装、用户服务保活和最后绑定，完整命令见 [Tailcat 接入教程](tailcat-quickstart.md)。以 Herdr 用户执行 `~/.local/bin/herdrx setup && ~/.local/bin/herdrx status`，确认 linger 后用 `~/.local/bin/herdrx connect --plain` 生成一次性绑定凭据。诊断用 status/doctor/logs，撤销用 `herdrx unpair`。删除网页主机记录不等于撤销远端绑定。
+按网站三步引导完成 CLI 安装、用户服务保活和最后绑定，完整命令见 [Tailcat 接入教程](tailcat-quickstart.md)。以 Herdr 用户执行 `~/.local/bin/herdrx setup && ~/.local/bin/herdrx status`，确认 linger 后执行网页生成的工作台连接命令，得到一次性绑定凭据。诊断用 status/doctor/logs，撤销用 `herdrx unpair`。删除网页主机记录不等于撤销远端绑定。
 
 接入页的一行安装命令直接从 GitHub Release 下载脚本和安装包，无用户凭据，也不经过工作台。安装时远程主机只需能访问 GitHub，无需为工作台配置安装入口或代理路径。
 
@@ -176,7 +176,7 @@ SSH 模式使用工作台主机上的 system OpenSSH（`--ssh-bin`，默认 `ssh
 
 ## CLI 发行与更新
 
-网站不会自动升级远程 CLI。远程主机可执行 `herdrx update --check` 查看已验签的最新正式版本，再用 `herdrx update` 安装；`herdrx rollback` 恢复兼容程序。签名信任根、离线更新、事务恢复和自定义路径见 [更新与恢复](update-and-recovery.md#cli-更新)。
+网站不会自动升级远程 CLI。自有中继版 CLI 执行 `herdrx update` 会安装上游正式版并替换本地补丁，见 [更新与恢复](update-and-recovery.md#cli-更新)。远程主机可执行 `herdrx update --check` 查看已验签的最新正式版本，再用 `herdrx update` 安装；`herdrx rollback` 恢复兼容程序。签名信任根、离线更新、事务恢复和自定义路径见 [更新与恢复](update-and-recovery.md#cli-更新)。
 
 ## 通知内容与时机
 

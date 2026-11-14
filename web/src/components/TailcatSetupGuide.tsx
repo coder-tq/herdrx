@@ -55,7 +55,7 @@ export function TailcatSetupGuide({ children, pending, resuming, onClose, onDefe
       <p className="field-hint">后台服务就绪后，生成一次性绑定凭据并粘贴到下方。绑定完成会自动进入工作台。</p>
       <RelayConnectCommand release={release}/>
       {children}
-      <details className="setup-details"><summary>凭据过期或连接失败</summary><p className="field-hint">重新运行 <code>~/.local/bin/herdrx connect --plain</code> 获取有效凭据；要作废尚未使用的旧凭据，请执行 <code>~/.local/bin/herdrx connect --renew --plain</code>。通过 <code>~/.local/bin/herdrx status</code>、<code>~/.local/bin/herdrx doctor</code>、<code>~/.local/bin/herdrx logs -n 100</code> 检查服务和网络。</p></details>
+      <details className="setup-details"><summary>凭据过期或连接失败</summary><p className="field-hint">从上方重新复制工作台连接命令获取有效凭据；要作废尚未使用的旧凭据，在该命令末尾追加 <code>--renew</code>。通过 <code>~/.local/bin/herdrx status</code>、<code>~/.local/bin/herdrx doctor</code>、<code>~/.local/bin/herdrx logs -n 100</code> 检查服务和网络。</p></details>
     </div>}
     <div className="setup-footer"><div className="setup-lifecycle">关闭浏览器或退出工作台后，远程主机上的 Herdr 与任务继续运行。</div>
     <div className="modal-actions setup-actions">

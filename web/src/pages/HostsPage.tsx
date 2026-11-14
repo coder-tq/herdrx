@@ -331,7 +331,7 @@ export function HostsPage() {
 
   const remove = async (host: Host) => {
     const detail = host.transport === 'tailcat'
-      ? '网站会删除连接配置，远程主机上的绑定仍会保留。请在远程主机运行 herdrx unpair 撤销绑定；重新接入时运行 herdrx connect --plain。远程 Herdr 和任务继续运行。'
+      ? '网站会删除连接配置，远程主机上的绑定仍会保留。请在远程主机运行 herdrx unpair 撤销绑定；重新接入时从“添加主机”复制工作台连接命令。远程 Herdr 和任务继续运行。'
       : '该主机的连接配置会删除，共享密钥会保留。远程 Herdr 和任务继续运行。'
     if (!await confirm(`删除“${host.name}”？${detail}`, { title: '删除主机', confirmLabel: '删除主机' })) return
     try { await api.deleteHost(host.id); await load() }

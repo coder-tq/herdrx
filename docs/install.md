@@ -28,7 +28,7 @@ docker compose up -d --wait
 
 1. 复制页面的一行安装命令，从 [GitHub Releases](https://github.com/riba2534/herdrx/releases) 安装 `herdrx`；自动识别 Linux / macOS 的 x86_64 / ARM64 并做 SHA-256 校验。
 2. 执行 `~/.local/bin/herdrx setup && ~/.local/bin/herdrx status`，确认用户后台服务就绪。Linux 再检查 `loginctl show-user "$(id -un)" --property=Linger`；需为 `Linger=yes`，未启用时执行 `loginctl enable-linger "$(id -un)"`，权限不足再加 sudo。macOS 的 LaunchAgent 依附图形登录会话：纯 SSH 登录的 Mac 没有 Aqua 会话，`launchctl` 无法加载 `gui` 域，需先在该机登录一次桌面；`setup` 会在这种情况下明确告警。
-3. 执行 `~/.local/bin/herdrx connect --plain`，在页面最后一步填写一次性绑定凭据并打开主机。
+3. 复制页面生成的工作台连接命令（含 `--workbench`）执行，在页面最后一步填写一次性绑定凭据并打开主机。
 
 所有复制命令、手动安装、PATH 设置、无 systemd 环境、升级及排障见 [Tailcat 接入教程](tailcat-quickstart.md)。网页的一行命令直接使用 GitHub Release 安装脚本，并将下载与安装固定到同一版本，只有预发布时也可直接安装。安装过程不依赖工作台或个人域名；后续命令直接使用安装路径，无需设置 PATH。
 
@@ -38,7 +38,7 @@ macOS 受控端为**预览**：Apple Silicon 已实机验证，Intel Mac 尚未�
 
 ## 工作台自带中继
 
-CLI v0.1.0-rc.2 起，网页连接命令可携带 20 分钟有效的中继授权。网站仅在 `HERDRX_PUBLIC_URL` 为公网 HTTPS、现有反向代理支持 `/derp` 协议升级且实际握手成功时提供此命令。CLI 从远程主机再次探测，失败时在接入前回退公共中继；所选区域随凭据固定，双方使用同一区域。默认 HTTP 安装保持可用，不负责申请证书。可选 STUN 与代理要求见 [运维](operations.md#工作台自带中继)。
+CLI v0.1.0-rc.2 起，网页连接命令可携带 20 分钟有效的中继授权。网站仅在 `HERDRX_PUBLIC_URL` 为公网 HTTPS、现有反向代理支持 `/derp` 协议升级且实际握手成功时提供此命令。CLI 从远程主机再次探测，失败时报错终止本次接入，不改用公共中继、不生成凭据；所选区域随凭据固定，双方使用同一区域。本分支是**自有中继版**，不是上游原版行为：Tailcat 只经工作台自带中继接入，需要公网 HTTPS 工作台且反向代理支持 `/derp`。条件不满足时网页不提供连接命令；未固定中继的新主机执行无参数 `herdrx connect` 会报错。网站不负责申请证书。可选 STUN 与代理要求见 [运维](operations.md#工作台自带中继)。
 
 已有 CLI 先升级，再从主机卡片「更新连接端点」复制命令并导入签名更新包；无需解除绑定。已绑定区域不会在运行期间自动切换到另一个区域。
 
