@@ -72,6 +72,14 @@ func TestEndpointMigrationKeepsIdentityAcrossDaemonRestart(t *testing.T) {
 	}
 	ping(cfg.Binding.FormalTailcatAddr)
 	before, _ := json.Marshal(cfg.Binding)
+	var failOut, failErr bytes.Buffer
+	if code := runConnect([]string{"--config", path, "--refresh-endpoint", "--plain", "--workbench", "https://127.0.0.1", "--relay-token", strings.Repeat("x", 43)}, &failOut, &failErr, env, path); code == 0 || failOut.Len() != 0 || !strings.Contains(failErr.String(), "no public relay was used") {
+		t.Fatalf("failed workbench refresh exported an endpoint: %s", failErr.String())
+	}
+	if kept, _ := store.Snapshot(); kept.EndpointVersion != 0 || kept.Binding.FormalTailcatAddr != cfg.Binding.FormalTailcatAddr {
+		t.Fatal("failed workbench refresh changed the bound endpoint")
+	}
+	ping(cfg.Binding.FormalTailcatAddr)
 	result, err := server.refreshEndpoint(newMap.Regions[1])
 	if err != nil {
 		t.Fatal(err)

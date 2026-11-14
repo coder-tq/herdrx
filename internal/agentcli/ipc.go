@@ -701,18 +701,6 @@ func (s *IPCServer) startEphemeralFromConfig(cfg Config) error {
 }
 
 func (s *IPCServer) issueEnrollment(cfg Config, renew bool, relays ...*tunnel.RelayBootstrap) (ConnectResult, error) {
-	s.mu.Lock()
-	if s.ephemServer != nil {
-		_ = s.ephemServer.Close()
-		s.ephemServer = nil
-	}
-	if renew && cfg.Binding.Status == "prepared" && s.formalServer != nil {
-		_ = s.formalServer.Close()
-		s.formalServer = nil
-		s.formalClientNode = ""
-	}
-	s.mu.Unlock()
-
 	enrollmentID, err := newEnrollmentID()
 	if err != nil {
 		return ConnectResult{}, err
@@ -736,7 +724,23 @@ func (s *IPCServer) issueEnrollment(cfg Config, renew bool, relays ...*tunnel.Re
 		}
 		nodes = append(nodes, cfg.RelayProbePrivate.Public())
 	}
-	region, relayStatus := selectWorkbenchRelay(context.Background(), cfg, selected, nodes)
+	// Select before closing listeners so a failed relay keeps the previous enrollment.
+	region, relayStatus, err := selectWorkbenchRelay(context.Background(), cfg, selected, nodes)
+	if err != nil {
+		return ConnectResult{}, err
+	}
+
+	s.mu.Lock()
+	if s.ephemServer != nil {
+		_ = s.ephemServer.Close()
+		s.ephemServer = nil
+	}
+	if renew && cfg.Binding.Status == "prepared" && s.formalServer != nil {
+		_ = s.formalServer.Close()
+		s.formalServer = nil
+		s.formalClientNode = ""
+	}
+	s.mu.Unlock()
 
 	hostSigner, err := ssh.ParsePrivateKey([]byte(cfg.SSHHostPrivate))
 	if err != nil {

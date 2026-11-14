@@ -77,20 +77,10 @@ func (s *IPCServer) handleRefreshEndpoint(w http.ResponseWriter, r *http.Request
 		if probeKey.IsZero() {
 			probeKey = key.NewNode()
 		}
-		input.Region, relayStatus = selectWorkbenchRelay(r.Context(), cfg, input.Relay, []key.NodePublic{cfg.Node.Private.Public(), controller, probeKey.Public()})
-		if input.Region == nil {
-			// Resolve the public fallback before updating a bound endpoint. A
-			// nil region otherwise means 'keep current' to refreshEndpoint.
-			info := tailcat.ConnInfo{RegionID: -1}
-			if err := info.Expand(r.Context(), tailcat.ExpandForServer); err != nil || len(info.Region) != 1 {
-				http.Error(w, "public relay selection failed; existing endpoint was retained", 502)
-				return
-			}
-			input.Region, err = tunnel.DefaultSSRFValidator.ValidateDERPRegion(info.Region[0])
-			if err != nil {
-				http.Error(w, "public relay validation failed; existing endpoint was retained", 502)
-				return
-			}
+		input.Region, relayStatus, err = selectWorkbenchRelay(r.Context(), cfg, input.Relay, []key.NodePublic{cfg.Node.Private.Public(), controller, probeKey.Public()})
+		if err != nil {
+			http.Error(w, err.Error(), 502)
+			return
 		}
 	}
 	result, err := s.refreshEndpoint(input.Region, probeKey)
